@@ -89,6 +89,38 @@ class Request(object_ref):
 
     __repr__ = __str__
 
+    def __getstate__(self):
+        state = {}
+        state['url'] = self._get_url()
+        state['method'] = self.method
+        state['headers'] = self.headers
+        state['cookies'] = self.cookies
+        state['meta'] = self.meta
+        state['encoding'] = self._encoding
+        if self.callback is not None:
+            state['callback_classpath'] = self.callback.im_self.__class__.__module__
+            state['callback_classname'] = self.callback.im_self.__class__.__name__
+            state['callback_funcname'] = self.callback.im_func.__name__
+        return state
+
+    def __setstate__(self, state):
+        self._set_url(state['url'])
+        self._meta = state['meta']
+        self.method = state['method']
+        self.headers = state['headers']
+        self.cookies = state['cookies']
+        if 'encoding' in state:
+            self._encoding = state['encoding']
+        self._body = ''
+        self.errback = None
+        if 'callback_classpath' in state:
+            module = __import__(state['callback_classpath'], globals(), locals(), [state['callback_classname']], -1)
+            oclass = getattr(module, state['callback_classname'])
+            obj = oclass()
+            self.callback = getattr(obj, state['callback_funcname'])
+        else:
+            self.callback = None
+
     def copy(self):
         """Return a copy of this Request"""
         return self.replace()
@@ -97,8 +129,8 @@ class Request(object_ref):
         """Create a new Request with the same attributes except for those
         given new values.
         """
-        for x in ['url', 'method', 'headers', 'body', 'cookies', 'meta', \
-                'encoding', 'priority', 'dont_filter', 'callback', 'errback']:
+        for x in ['url', 'method', 'headers', 'body', 'cookies', 'meta',
+                  'encoding', 'priority', 'dont_filter', 'callback', 'errback']:
             kwargs.setdefault(x, getattr(self, x))
         cls = kwargs.pop('cls', self.__class__)
         return cls(*args, **kwargs)
