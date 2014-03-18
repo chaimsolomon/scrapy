@@ -6,7 +6,10 @@ import marshal, cPickle as pickle
 
 from queuelib import queue
 
+from scrapy.utils import conf
+
 import pika
+import code
 
 class RabbitQueue(object):
     """Queue that uses RabbitMQ with Pika for the backend"""
@@ -14,7 +17,8 @@ class RabbitQueue(object):
     def __init__(self, queuename="default"):
         self.queuename = queuename
         self.seen_queues = []
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+        self.connection = pika.BlockingConnection(
+            pika.ConnectionParameters(conf.get_config().get('RabbitConfig', 'host')))
         self.channel = self.connection.channel()
         self.channel.queue_declare(queue=self.queuename)
         self.seen_queues.append(self.queuename)
