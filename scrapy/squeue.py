@@ -20,7 +20,8 @@ class RabbitQueue(object):
         self.connection = pika.BlockingConnection(
             pika.ConnectionParameters(conf.get_config().get('RabbitConfig', 'host')))
         self.channel = self.connection.channel()
-        self.channel.queue_declare(queue=self.queuename)
+        self.client_params = {"x-ha-policy": "all"}
+        self.channel.queue_declare(queue=self.queuename, arguments=self.client_params)
         self.seen_queues.append(self.queuename)
 
     def push(self, string):
@@ -31,7 +32,7 @@ class RabbitQueue(object):
 
     def push_to_queue(self, string, queue):
         if queue not in self.seen_queues:
-            self.channel.queue_declare(queue=queue)
+            self.channel.queue_declare(queue=queue, arguments=self.client_params)
             self.seen_queues.append(queue)
         self.channel.basic_publish(exchange='',
                                    routing_key=queue,
@@ -45,7 +46,7 @@ class RabbitQueue(object):
         return body
 
     def __len__(self):
-        return self.channel.queue_declare(self.queuename).method.message_count
+        return self.channel.queue_declare(self.queuename, arguments=self.client_params).method.message_count
 
     def close(self):
         self.channel.basic_cancel()
