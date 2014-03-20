@@ -14,6 +14,8 @@ class Command(ScrapyCommand):
 
     def add_options(self, parser):
         ScrapyCommand.add_options(self, parser)
+        parser.add_option("-s", action='store_true', dest='skip_start_urls', default=False,
+                          help="Skip start URLs and work on queue")
         parser.add_option("-a", dest="spargs", action="append", default=[], metavar="NAME=VALUE", \
             help="set spider argument (may be repeated)")
         parser.add_option("-o", "--output", metavar="FILE", \
@@ -23,6 +25,8 @@ class Command(ScrapyCommand):
 
     def process_options(self, args, opts):
         ScrapyCommand.process_options(self, args, opts)
+        self.settings.overrides['skip_start_urls'] = opts.skip_start_urls
+        # code.interact('po', local=locals())
         try:
             opts.spargs = arglist_to_dict(opts.spargs)
         except ValueError:

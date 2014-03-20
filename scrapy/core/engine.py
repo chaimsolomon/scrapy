@@ -93,6 +93,9 @@ class ExecutionEngine(object):
         """Resume the execution engine"""
         self.paused = False
 
+    def _skip_start_requests(self):
+        return self.settings.overrides['skip_start_urls']
+
     def _next_request(self, spider):
         slot = self.slot
         if not slot:
@@ -106,7 +109,7 @@ class ExecutionEngine(object):
             if not self._next_request_from_scheduler(spider):
                 break
 
-        if slot.start_requests and not self._needs_backout(spider):
+        if not self._skip_start_requests() and slot.start_requests and not self._needs_backout(spider):
             try:
                 request = next(slot.start_requests)
             except StopIteration:
@@ -219,7 +222,10 @@ class ExecutionEngine(object):
         log.msg("Spider opened", spider=spider)
         nextcall = CallLaterOnce(self._next_request, spider)
         scheduler = self.scheduler_cls.from_crawler(self.crawler)
-        start_requests = yield self.scraper.spidermw.process_start_requests(start_requests, spider)
+        if self._skip_start_requests():
+            start_requests = iter([])
+        else:
+            start_requests = yield self.scraper.spidermw.process_start_requests(start_requests, spider)
         slot = Slot(start_requests, close_if_idle, nextcall, scheduler)
         self.slot = slot
         self.spider = spider
