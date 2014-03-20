@@ -63,7 +63,8 @@ class Crawler(object):
     def start(self):
         yield defer.maybeDeferred(self.configure)
         if self._spider:
-            yield self.engine.open_spider(self._spider, self._start_requests())
+            dont_exit = not self.settings.overrides['dont_exit']
+            yield self.engine.open_spider(self._spider, self._start_requests(), dont_exit)
         yield defer.maybeDeferred(self.engine.start)
 
     @defer.inlineCallbacks
