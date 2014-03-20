@@ -15,6 +15,7 @@ from scrapy.utils.decorator import deprecated
 from scrapy.utils.url import escape_ajax
 from scrapy.http.common import obsolete_setter
 
+
 class Request(object_ref):
 
     def __init__(self, url, callback=None, method='GET', headers=None, body=None, 
@@ -97,6 +98,8 @@ class Request(object_ref):
         state['cookies'] = self.cookies
         state['meta'] = self.meta
         state['encoding'] = self._encoding
+        state['priority'] = self.priority
+        state['dont_filter'] = self.dont_filter
         if self.callback is not None:
             state['callback_classpath'] = self.callback.im_self.__class__.__module__
             state['callback_classname'] = self.callback.im_self.__class__.__name__
@@ -109,6 +112,14 @@ class Request(object_ref):
         self.method = state['method']
         self.headers = state['headers']
         self.cookies = state['cookies']
+        if 'priority' in state:
+            self.priority = state['priority']
+        else:
+            self.priority = 0
+        if 'dont_filter' in state:
+            self.dont_filter = state['dont_filter']
+        else:
+            self.dont_filter = False
         if 'encoding' in state:
             self._encoding = state['encoding']
         self._body = ''
