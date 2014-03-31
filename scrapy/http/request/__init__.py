@@ -15,12 +15,11 @@ from scrapy.utils.decorator import deprecated
 from scrapy.utils.url import escape_ajax
 from scrapy.http.common import obsolete_setter
 
-
 class Request(object_ref):
 
     def __init__(self, url, callback=None, method='GET', headers=None, body=None, 
                  cookies=None, meta=None, encoding='utf-8', priority=0,
-                 dont_filter=False, errback=None):
+                 dont_filter=False, errback=None, response=None):
 
         self._encoding = encoding  # this one has to be set first
         self.method = str(method).upper()
@@ -37,6 +36,15 @@ class Request(object_ref):
         self.headers = Headers(headers or {}, encoding=encoding)
         self.dont_filter = dont_filter
 
+        if meta is None:
+          meta = {}
+        if response is not None:
+            if 'link_distance' in response.meta and not 'link_distance' in meta:
+                meta['link_distance'] = response.meta['link_distance'] + 1
+            if response.url:
+                meta['referer_url'] = response.url
+        else:
+            meta['link_distance'] = 0
         self._meta = dict(meta) if meta else None
 
     @property
