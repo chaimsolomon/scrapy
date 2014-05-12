@@ -35,6 +35,23 @@ class CrawlSpider(Spider):
         super(CrawlSpider, self).__init__(*a, **kw)
         self._compile_rules()
 
+    def guess_title(self, selector):
+        title = selector.xpath('//title/text()').extract()[0]
+        if '|' in title:
+            return title.split('|')[-1].strip()
+        elif u'\xab' in title:
+            return title.split(u'\xab')[1].strip()
+        elif u'\xbb' in title:
+            return title.split(u'\xbb')[1].strip()
+        elif u'\u2013' in title:
+            return title.split(u'\u2013')[1].strip()
+        elif '-' in title:
+            return title.split('-')[-1].strip()
+        elif ':' in title:
+            return title.split(':')[0].strip()
+        else:
+            return title.strip()
+
     def parse(self, response):
         return self._parse_response(response, self.parse_start_url, cb_kwargs={}, follow=True)
 
